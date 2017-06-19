@@ -1,0 +1,102 @@
+from neuron import h
+soma = h.Section()
+
+def setBiophysics():
+	soma.nseg = 3
+	soma.diam = 1100
+	soma.L    = 1050
+	soma.Ra   = 263
+	soma.cm   = 4.0
+
+	soma.insert('pas')
+	soma.g_pas = 7.0e-5
+	soma.e_pas = -55.5
+	#print(member[0])
+	#print(member[1])
+	
+	#print('__')
+	soma.insert('KvEXP2')
+	soma.gmax_KvEXP2 = 0.00562146
+	soma.ek = -40
+	#print(member[2])
+	#print(member[3])
+	
+	#soma.insert('CaL')
+	#soma.eca = 133
+	#soma.gmax_CaL = 0.0007
+	#print(member[4])
+
+stim1 = h.VClamp(0.5, sec=soma)
+	
+def setStimulation(rs):	
+
+	init_time_injection = 200
+	#stim1.del = init_time_injection
+	stim1.dur[0] = 1000
+	stim1.amp[0] = 20
+	
+	stim1.dur[1] = 40
+	stim1.amp[1] = -80
+
+	stim1.dur[2] = 200
+	stim1.amp[2] = -120		
+	stim1.rstim  = 1
+
+	stim1.tau1 = 0.79 # ms (default = 0.001)
+	stim1.tau2 = 0
+
+	#stim2 = h.IClamp(0.5, sec=soma)
+	#stim2.delay = 1000
+	#stim2.dur = 40
+	#stim2.amp = -	
+
+	#stim3 = h.IClamp(0.5, sec=soma)
+	#stim3.delay = init_time_injection + 2
+	#stim3.dur = 1
+	#stim3.amp = 1.5		
+
+	#stim4 = h.IClamp(0.5, sec=soma)
+	#stim4.delay = init_time_injection + 3
+	#stim4.dur = 1
+	#stim4.amp = 2.0		
+
+vec_t = h.Vector()
+vec_s = h.Vector()
+vec_i_pas = h.Vector()
+
+def initAndRun():
+	h.dt = 1.0
+	vec_t.record(h._ref_t)
+	vec_s.record(soma(0.5)._ref_v)
+	vec_i_pas.record(stim1._ref_i)
+	
+	h.load_file("stdrun.hoc")
+
+	h.t = 0
+	h.tstop = 1200.0
+	h.dt = 1.0
+	h.run()
+
+	return vec_i_pas
+
+def plot():
+	from matplotlib import pyplot
+	pyplot.figure()
+	pyplot.plot(vec_t, vec_i_pas, color = 'red')
+	#pyplot.plot(vec_t, vec_ik, color = 'green')
+	pyplot.axis([950, 1200, -20000, 15000])
+	#pyplot.axis([0, 1200, -200, 150])
+	pyplot.xlabel('time ms')
+
+	pyplot.show()
+
+def executing(member =[]):
+	setBiophysics()
+	setStimulation(member)
+	res = initAndRun()
+	plot()
+	#print("______")
+	return res
+
+if __name__ == '__main__':
+	executing()
